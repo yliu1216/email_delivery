@@ -109,8 +109,7 @@ submission should include the following at a bare minimum:
 2. Functional native registration form. Users should be able to create a new
    account with a username and password, assuming the requested user does not
    already exist.
-3. A functional WebView that injects authentication accordingly such that the
-   existing infrastructure recognizes the token.
+3. A functional WebView that injects authentication accordingly such that the existing infrastructure recognizes the token.
 
 You are not limited to the requirements listed above. As long as you include the
 three primary assignment points, you’re free to add whatever else you want, but

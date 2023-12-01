@@ -1,6 +1,6 @@
 import IRoute from '../types/IRoute';
 import {Router} from 'express';
-import {compareSync} from 'bcrypt';
+import {compareSync, hashSync} from 'bcrypt';
 import {attachSession} from '../middleware/auth';
 import {sequelize, Session, User} from '../services/db';
 import {randomBytes} from 'crypto';
@@ -75,7 +75,7 @@ const AuthRouter: IRoute = {
       let session;
       try {
         // Persist the token to the database.
-        session = await Session.create({
+          session = await Session.create({
           token: sessionToken,
           user: user.dataValues.id,
         });
@@ -91,9 +91,11 @@ const AuthRouter: IRoute = {
       // We set the cookie on the response so that browser sessions will
       // be able to use it.
       res.cookie('SESSION_TOKEN', sessionToken, {
+        sameSite: 'none',
+        secure: false,  // Make sure to set this to true for HTTPS
         expires: new Date(Date.now() + (3600 * 24 * 7 * 1000)), // +7 days
-        secure: false,
         httpOnly: true,
+        path: '/',
       });
 
       // We return the cookie to the consumer so that non-browser
@@ -110,14 +112,62 @@ const AuthRouter: IRoute = {
       });
     });
 
+
+
     // Attempt to register
-    router.post('/register', (req, res) => {
+    router.post('/register', async (req, res) => {
       // TODO
+      const {username, password} = req.body;
+
+      // if username and password empty, show error
+      if(!username || !password){
+        res.status(400).json({
+          success: false,
+          message: "You forget to enter username/password !"
+        });
+      }
+
+      // check if user already registered
+      const user = await User.findOne({
+        where: sequelize.where(
+          sequelize.fn('lower', sequelize.col('username')),
+          sequelize.fn('lower', username),
+        ),
+      }).catch(err => console.error('User lookup failed.', err));
+
+      // if user exists, show error
+      if(user){
+        return res.status(400).json({
+          success: false,
+          message: "User already exists",
+        });
+      }
+      
+      //create new user on database
+        const newUser = await User.create({
+          registered:new Date(),
+          username: username,
+          password: hashSync(password, 12),
+          displayName: username,
+        }).catch(err => {return err.message});
+
+
+      return res.json({
+        success: true,
+        message: "User created successfully.",
+        newUser
+      });
+
     });
 
+
+
     // Log out
-    router.post('/logout', (req, res) => {
-      // TODO
+    router.post('/logout', async(req,res) => {
+        await res.clearCookie('token', {path: "/", sameSite: 'none', secure: true });
+        res.json({ 
+        success: true,
+        message: 'Logged out successfully' });
     });
 
     return router;

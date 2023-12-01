@@ -1,6 +1,6 @@
 const config = {
   http: {
-    host: process.env.EXPRESS_HOST || '127.0.0.1',
+    host: process.env.EXPRESS_HOST || '127.0.0.1' || '192.168.56.1' ,
     port: parseInt(process.env.EXPRESS_PORT, 10) || 50000,
   }
 }

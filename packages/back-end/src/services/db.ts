@@ -3,7 +3,7 @@ import {join, resolve} from 'path';
 
 export const sequelize = new Sequelize({
   dialect: 'sqlite',
-  storage: process.env.EXPRESS_SQLZ_DB || (resolve(join(__dirname, '../../../../database.db'))),
+  storage: process.env.EXPRESS_SQLZ_DB || (resolve(join(__dirname, '../../../../database1.db'))),
 });
 
 export type IUser = {

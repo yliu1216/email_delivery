@@ -11,7 +11,7 @@ export type StackScreens = {
   Home: undefined,
   Login: undefined,
   Register: undefined,
-  App: undefined,
+  App: {SESSION_TOKEN:string},
 }
 
 export const Stack = createNativeStackNavigator<StackScreens>();
