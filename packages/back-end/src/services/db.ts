@@ -66,7 +66,7 @@ Session.init({
     autoIncrement: true,
   },
   user: {
-    type: DataTypes.NUMBER,
+    type: DataTypes.INTEGER,
     allowNull: false,
   },
   token: {

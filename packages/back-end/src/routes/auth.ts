@@ -4,7 +4,27 @@ import {compareSync, hashSync} from 'bcrypt';
 import {attachSession} from '../middleware/auth';
 import {sequelize, Session, User} from '../services/db';
 import {randomBytes} from 'crypto';
+import * as sqlite3 from 'sqlite3';
+import {join, resolve} from 'path';
 
+const path = (resolve(join(__dirname, '../../../../school_database.db')));
+console.log(path);
+const schoolDb = new sqlite3.Database((resolve(join(__dirname, '../../../../school_database.db'))));
+/*
+schoolDb.serialize(() => {
+  console.log('Connected to the SQLite database');
+  // ... other database operations
+// Fetch all rows from the 'NAMM_Email' table
+
+schoolDb.all('SELECT * FROM NAMM', (err, rows) => {
+  if (err) {
+    console.error('Error fetching data from NAMM_Email:', err);
+  } else {
+    console.log('Fetched data from NAMM_Email:', rows);
+  }
+});
+});
+*/
 const AuthRouter: IRoute = {
   route: '/auth',
   router() {
@@ -162,6 +182,161 @@ const AuthRouter: IRoute = {
 
 
 
+    //search
+    router.post('/search', async(req, res) => {
+        try{
+          // get the search text
+          const {searchBar, cityElementSelected, stateElementSelected} = req.body;
+          console.log(searchBar, cityElementSelected, stateElementSelected);
+          if(!searchBar && !cityElementSelected && !stateElementSelected){
+            res.status(400).json({
+              success: false,
+              message: 'You forget to enter information !'
+            });
+          }
+
+          if(searchBar){
+            await schoolDb.all('select * from NAMM where Email Like ?', [`%${searchBar}%`], (err, row)=>{
+              if(err) return res.json({ 
+                success: false,
+                message: 'Please enter the correct information!',
+                error: err
+              })
+              else{
+                console.log(`Here are the results: ${row}`);
+                res.json({
+                  success: true,
+                  message: 'Successfully find the data',
+                  data: row
+                })
+              }
+            })
+          }
+
+          if (cityElementSelected) {
+            await schoolDb.all('SELECT * FROM NAMM WHERE City LIKE ?', [`%${cityElementSelected}%`], (err, row) => {
+              if (err) {
+                return res.json({
+                  success: false,
+                  message: 'Please enter the correct information!',
+                  error: err
+                });
+              } else {
+                console.log(`Here are the results: ${row}`);
+                res.json({
+                  success: true,
+                  message: 'Successfully find the data',
+                  data: row
+                });
+              }
+            });
+          }
+          
+          if (stateElementSelected) {
+            await schoolDb.all('SELECT * FROM NAMM WHERE state LIKE ?', [`%${stateElementSelected}%`], (err, row) => {
+              if (err) {
+                return res.json({
+                  success: false,
+                  message: 'Please enter the correct information!',
+                  error: err
+                });
+              } else {
+                console.log(`Here are the results: ${row}`);
+                res.json({
+                  success: true,
+                  message: 'Successfully find the data',
+                  data: row
+                });
+              }
+            });
+          }
+
+
+
+        }catch(err){
+          console.log(err);
+        }
+
+          /*
+          if(!searchBar){
+            res.status(400).json({
+              success: false,
+              message: "You forget to enter information !"
+            });
+          }
+
+        
+            await schoolDb.all('select * from NAMM where Email like?',[`%${searchBar}`], (err, row)=>{
+            if(err){
+              console.log('Invalid query, please try again', err);
+            }else{
+              console.log('Here are the results. ', row);
+              return res.json({
+                success: true,
+                message: 'Sucessfully find the results',
+                data: row
+              })
+            }
+          })
+
+        }catch(err) {
+          console.error(err.message);
+        }
+*/
+    })
+
+
+
+    router.get('/displayState', async (req, res) => {
+      try {
+         await schoolDb.all('SELECT Distinct State FROM NAMM', (err, rows) => {
+          if (err) {
+            console.error('Error executing query:', err);
+            return res.status(500).json({
+              success: false,
+              message: 'Error retrieving data from the database',
+            });
+          }
+   
+          console.log(rows); // Log the results
+          return res.json({
+            success: true,
+            message: 'Successfully retrieved data from the database',
+            data: rows,
+          });
+        });
+      } catch (error) {
+        return passError('Failed to retrieve data from the database.', error, res);
+      }
+   });
+
+
+   router.get('/displayCity', async (req, res) => {
+    try{
+        await schoolDb.all('SELECT Distinct City FROM NAMM', (err, rows) => {
+        if(err){
+          console.error('Error executing query:', err);
+          return res.status(500).json({
+            success: false,
+            message: 'Error retrieving data from the database',
+          });
+        }
+
+        console.log(rows); // Log the results
+          return res.json({
+            success: true,
+            message: 'Successfully retrieved data from the database',
+            data: rows,
+          });
+
+      });
+    }catch(error) {
+      return passError('Failed to retrieve data from the database.', error, res);
+    }
+   })
+
+
+    
     // Log out
     router.post('/logout', async(req,res) => {
         await res.clearCookie('token', {path: "/", sameSite: 'none', secure: true });
@@ -172,7 +347,12 @@ const AuthRouter: IRoute = {
 
     return router;
   },
+
+
 };
+
+
+
 
 export default AuthRouter;
 

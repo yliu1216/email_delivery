@@ -5,6 +5,7 @@ export function attachSession(req: Request, res: Response, next: NextFunction) {
   if (!req.cookies?.SESSION_TOKEN) {
     return next();
   }
+  
   req.session = {
     token: null,
     user: null,
